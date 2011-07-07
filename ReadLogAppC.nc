@@ -14,6 +14,8 @@ implementation {
 
   components new LogStorageC(VOLUME_LOGTEST, TRUE);
 
+  components UserButtonC;
+
   ReadLogC.Boot -> MainC.Boot;
   ReadLogC.AMControl -> SerialAM;
   ReadLogC.AMSend -> SerialAM.AMSend[AM_READ_LOG_MSG];
@@ -22,6 +24,9 @@ implementation {
   ReadLogC.ReadTimer -> ReadTimer;
 
   ReadLogC.LogRead -> LogStorageC;
+  ReadLogC.LogWrite -> LogStorageC;
+
+  ReadLogC.Notify -> UserButtonC;
 }
 
 

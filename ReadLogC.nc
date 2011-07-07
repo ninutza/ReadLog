@@ -1,5 +1,6 @@
 
-#include "Timer.h"
+#include <Timer.h>
+#include <UserButton.h>
 #include "ReadLog.h"
 
 module ReadLogC {
@@ -12,8 +13,12 @@ module ReadLogC {
     interface Timer<TMilli> as ReadTimer;
 
     interface LogRead;    
+    interface LogWrite;
+
+    interface Notify<button_state_t>;
   }
 }
+
 
 implementation {
 
@@ -22,28 +27,9 @@ implementation {
   nx_uint8_t index;  
 
   event void Boot.booted() {
+    call Notify.enable();
     call AMControl.start();
   }
-  /*
-  event void MilliTimer.fired() {
-    counter++;
-    if (locked) {
-      return;
-    }
-    else {
-      test_serial_msg_t* rcm = (test_serial_msg_t*)call Packet.getPayload(&packet, sizeof(test_serial_msg_t));
-      if (rcm == NULL) {return;}
-      if (call Packet.maxPayloadLength() < sizeof(test_serial_msg_t)) {
-	return;
-      }
-
-      rcm->counter = counter;
-      if (call AMSend.send(AM_BROADCAST_ADDR, &packet, sizeof(test_serial_msg_t)) == SUCCESS) {
-	locked = TRUE;
-      }
-    }
-  }
-  */
 
   event void AMSend.sendDone(message_t* bufPtr, error_t error) {
     if (&packet == bufPtr) {
@@ -77,6 +63,8 @@ implementation {
       send_log->no_pings = log_line.no_pings[index];		
       send_log->sourceAddr = log_line.sourceAddr[index];       
       send_log->sig_val = log_line.sig_val[index];
+      send_log->vNum = log_line.vNum[index];
+      send_log->pNum = log_line.pNum[index];
 
       index++;
 
@@ -91,6 +79,19 @@ implementation {
   }
 
   event void AMControl.stopDone(error_t err) {
+  }
+
+  event void Notify.notify( button_state_t state ) {
+    if ( state == BUTTON_PRESSED ) {
+      // call to erase the log, stop timer if on
+      call ReadTimer.stop();
+
+      call Leds.led1Toggle();
+
+      call LogWrite.erase();
+    } else if ( state == BUTTON_RELEASED ) {
+      // do nothing, program is done
+    }
   }
 
   event void LogRead.readDone(void* buf, storage_len_t len, error_t err) {
@@ -110,6 +111,28 @@ implementation {
   event void LogRead.seekDone(error_t err) {
   }
 
+  event void LogWrite.eraseDone(error_t err) {
+    // send a blank message to serial to confirm erasure
+      read_log_msg_t* send_log = (read_log_msg_t*)call Packet.getPayload(&packet, sizeof(read_log_msg_t));
+
+      send_log->no_pings = 0;		
+      send_log->sourceAddr = 0;       
+      send_log->sig_val = 0;
+      send_log->vNum = 0;
+      send_log->pNum = 0;
+
+      if (call AMSend.send(AM_BROADCAST_ADDR, &packet, sizeof(read_log_msg_t)) == SUCCESS) {
+        // successful send of serial message
+      }
+    
+  }
+
+  event void LogWrite.appendDone(void* buf, storage_len_t len, bool recordsLost, error_t err) {
+  }
+
+  event void LogWrite.syncDone(error_t err) {
+  }
+  
 
 }
 
