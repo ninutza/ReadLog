@@ -23,7 +23,7 @@ module ReadLogC {
 implementation {
 
   message_t packet;
-  logLine log_line;
+  logInput log_line;
   nx_uint8_t index;  
 
   event void Boot.booted() {
@@ -53,13 +53,14 @@ implementation {
     if(index == 10) { // all previous log info has been transmitted, read next log line
       call Leds.led0On();
 
-      if (call LogRead.read(&log_line, sizeof(logLine)) != SUCCESS) { 
+      if (call LogRead.read(&log_line, sizeof(logInput)) != SUCCESS) { 
 	// not critical, so no error handling
       }
     }
     else { // a log message has been read, only partially transmitted
       read_log_msg_t* send_log = (read_log_msg_t*)call Packet.getPayload(&packet, sizeof(read_log_msg_t));
 
+      send_log->sourceType = log_line.sourceType[index];
       send_log->no_pings = log_line.no_pings[index];		
       send_log->sourceAddr = log_line.sourceAddr[index];       
       send_log->sig_val = log_line.sig_val[index];
@@ -97,7 +98,7 @@ implementation {
   event void LogRead.readDone(void* buf, storage_len_t len, error_t err) {
 
 
-    if ( (len == sizeof(logLine)) && (buf == &log_line) ) { 	// a log entry was correctly read
+    if ( (len == sizeof(logInput)) && (buf == &log_line) ) { 	// a log entry was correctly read
       // set index to 0 and reset transmission timer
       index = 0;
       call ReadTimer.startOneShot(500);
@@ -115,6 +116,7 @@ implementation {
     // send a blank message to serial to confirm erasure
       read_log_msg_t* send_log = (read_log_msg_t*)call Packet.getPayload(&packet, sizeof(read_log_msg_t));
 
+      send_log->sourceType = 0xFF;
       send_log->no_pings = 0;		
       send_log->sourceAddr = 0;       
       send_log->sig_val = 0;
