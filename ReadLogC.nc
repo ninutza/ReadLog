@@ -67,6 +67,12 @@ implementation {
       send_log->vNum = log_line.vNum[index];
       send_log->pNum = log_line.pNum[index];
 
+      send_log->time = log_line.time[index];
+      send_log->curr_vNum = log_line.curr_vNum[index];
+      send_log->curr_pNum = log_line.curr_pNum[index];
+      send_log->no_packs = log_line.no_packs[index];
+
+
       index++;
 
       call Leds.led2On();
@@ -122,6 +128,12 @@ implementation {
       send_log->sig_val = 0;
       send_log->vNum = 0;
       send_log->pNum = 0;
+
+      send_log->time = 0;
+      send_log->curr_vNum = 0;
+      send_log->curr_pNum = 0;
+      send_log->no_packs = 0xFF;
+
 
       if (call AMSend.send(AM_BROADCAST_ADDR, &packet, sizeof(read_log_msg_t)) == SUCCESS) {
         // successful send of serial message

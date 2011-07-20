@@ -15,6 +15,12 @@ typedef nx_struct logLine {
     nx_int16_t sig_val;    // this will contain a concatenated value of data type and data ID if not ping msg
     nx_uint8_t vNum;
     nx_uint8_t pNum;
+
+    nx_uint32_t time;	// current time when logging
+    nx_uint8_t curr_vNum; // current version in incomplete
+    nx_uint8_t curr_pNum; // current packet number in incomplete
+    nx_uint16_t no_packs; // number of packets sent while running
+
   } read_log_msg_t;
 
 typedef nx_struct logInput {
@@ -24,6 +30,12 @@ typedef nx_struct logInput {
     nx_int16_t sig_val[LOG_MAX];    // this will contain a concatenated value of data type and data ID if not ping msg
     nx_uint8_t vNum[LOG_MAX];
     nx_uint8_t pNum[LOG_MAX];
+
+    nx_uint32_t time[LOG_MAX];	// current time when logging
+    nx_uint8_t curr_vNum[LOG_MAX]; // current version in incomplete
+    nx_uint8_t curr_pNum[LOG_MAX]; // current packet number in incomplete
+    nx_uint16_t no_packs[LOG_MAX]; // number of packets sent while running
+
   } logInput;
 
 
